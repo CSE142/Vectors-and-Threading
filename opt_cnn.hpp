@@ -25,17 +25,18 @@ public:
 
 	}
 
-#define FC_ACTIVATE_IMPLEMENTATION g_param1_value
-//#define FC_ACTIVATE_IMPLEMENTATION 1
-//#define CALC_GRADS_IMPLEMENTATION g_param1_value
-#define FC_ACTIVATE_THREAD_COUNT g_thread_count
+//#define FC_ACTIVATE_IMPLEMENTATION g_param1_value
+#define FC_ACTIVATE_IMPLEMENTATION 1
+#define CALC_GRADS_IMPLEMENTATION g_param1_value
+//#define FC_ACTIVATE_THREAD_COUNT g_thread_count
+#define CALC_GRADS_THREAD_COUNT g_thread_count
 	
 	void activate( tensor_t<double>& in ) {
 		
 		std::stringstream ss;
 		
 		ss << g_function_name << "_I" << FC_ACTIVATE_IMPLEMENTATION << "_" << g_param2_value << "_" << g_param3_value << "_" << g_param4_value;
-		omp_set_num_threads(FC_ACTIVATE_THREAD_COUNT);
+		omp_set_num_threads(4);
 		NEW_TRACE(ss.str().c_str());
 		START_TRACE();
 		DUMP_TENSOR_START("weights", weights);
@@ -93,9 +94,12 @@ public:
 			}
 		}
 
-#define I_TILE_SIZE g_param2_value
-#define Y_TILE_SIZE g_param3_value
-#define N_TILE_SIZE g_param4_value
+//#define I_TILE_SIZE g_param2_value
+//#define Y_TILE_SIZE g_param3_value
+//#define N_TILE_SIZE g_param4_value
+#define I_TILE_SIZE 32
+#define Y_TILE_SIZE 4
+#define N_TILE_SIZE 16
 
 		for ( int nn = 0; nn < out.size.x; nn+=N_TILE_SIZE ) {
 			for ( int ii = 0; ii < in.size.x; ii += I_TILE_SIZE) {
@@ -126,12 +130,163 @@ public:
 	}
 
 	void calc_grads( const tensor_t<double>& grad_next_layer ) {
-		calc_grads_thread_baseline(grad_next_layer);
+		omp_set_num_threads(CALC_GRADS_THREAD_COUNT);
+		
+		switch (CALC_GRADS_IMPLEMENTATION) {
+			case 1:
+				calc_grads_thread_baseline(grad_next_layer);
+				break;
+			case 2:
+				calc_grads_thread_baseline_nn(grad_next_layer);
+				break;
+			case 3:
+				calc_grads_thread_baseline_b(grad_next_layer);
+				break;
+			case 4:
+				calc_grads_thread_baseline_n(grad_next_layer);
+				break;
+			case 5:
+				calc_grads_thread_baseline_i(grad_next_layer);
+				break;
+			default:
+				calc_grads_thread_baseline(grad_next_layer);
+				break;
+		}
 	}
 			
 	// This is as a starting point for your work on this lab.
 #define BLOCK_SIZE 4	
 	void calc_grads_thread_baseline( const tensor_t<double>& grad_next_layer ) {
+		
+		memset( grads_out.data, 0, grads_out.size.x * grads_out.size.y * grads_out.size.z * sizeof( double ) );
+		
+                grads_out.size.x = grads_out.size.x * grads_out.size.y * grads_out.size.z;
+                grads_out.size.y = 1;
+                grads_out.size.z = 1;
+
+                for ( int b = 0; b < out.size.b; b++ ) {
+                        for ( int n = 0; n < activator_input.size.x; n++ ){
+				double ad = activator_derivative( activator_input(n, 0, 0, b) );
+				double ng = grad_next_layer(n, 0, 0, b);
+				act_grad(n, 0, 0, b) = ad * ng;
+                        }
+                }
+		
+		// Reorder loops and  tile on n
+		for ( int nn = 0; nn < out.size.x; nn+=BLOCK_SIZE ) {
+			for ( int b = 0; b < out.size.b; b++ ) {
+				for ( int n = nn; n < nn + BLOCK_SIZE && n < out.size.x; n++ ) {
+					for ( int i = 0; i < grads_out.size.x; i++ ) {
+						grads_out(i, 0, 0, b) += act_grad(n, 0, 0, b) * weights( i, n, 0);
+					}
+				}
+                        }
+                }
+		grads_out.size = in.size;
+	}
+	
+	void calc_grads_thread_baseline_nn( const tensor_t<double>& grad_next_layer ) {
+		
+		memset( grads_out.data, 0, grads_out.size.x * grads_out.size.y * grads_out.size.z * sizeof( double ) );
+		
+                grads_out.size.x = grads_out.size.x * grads_out.size.y * grads_out.size.z;
+                grads_out.size.y = 1;
+                grads_out.size.z = 1;
+
+                for ( int b = 0; b < out.size.b; b++ ) {
+                        for ( int n = 0; n < activator_input.size.x; n++ ){
+				double ad = activator_derivative( activator_input(n, 0, 0, b) );
+				double ng = grad_next_layer(n, 0, 0, b);
+				act_grad(n, 0, 0, b) = ad * ng;
+                        }
+                }
+		
+		// Reorder loops and  tile on n
+		#pragma omp parallel for
+		for ( int nn = 0; nn < out.size.x; nn+=BLOCK_SIZE ) {
+			tensor_t<double>_grads_out(grads_out.size);
+			_grads_out.clear();
+
+			for ( int b = 0; b < out.size.b; b++ ) {
+				for ( int n = nn; n < nn + BLOCK_SIZE && n < out.size.x; n++ ) {
+					for ( int i = 0; i < grads_out.size.x; i++ ) {
+						double t = act_grad(n, 0, 0, b) * weights( i, n, 0);
+						_grads_out(i, 0, 0, b) += t;
+					}
+				}
+                        }
+		#pragma omp critical
+		{
+			for (int b = 0; b < out.size.b; b++) {
+				for (int i = 0; i < grads_out.size.x; i++){
+					grads_out(i, 0, 0, b) += _grads_out(i, 0, 0, b);
+				}
+			}
+                }
+		}
+		grads_out.size = in.size;
+	}
+	
+	void calc_grads_thread_baseline_b( const tensor_t<double>& grad_next_layer ) {
+		
+		memset( grads_out.data, 0, grads_out.size.x * grads_out.size.y * grads_out.size.z * sizeof( double ) );
+		
+                grads_out.size.x = grads_out.size.x * grads_out.size.y * grads_out.size.z;
+                grads_out.size.y = 1;
+                grads_out.size.z = 1;
+
+                for ( int b = 0; b < out.size.b; b++ ) {
+                        for ( int n = 0; n < activator_input.size.x; n++ ){
+				double ad = activator_derivative( activator_input(n, 0, 0, b) );
+				double ng = grad_next_layer(n, 0, 0, b);
+				act_grad(n, 0, 0, b) = ad * ng;
+                        }
+                }
+		
+		// Reorder loops and  tile on n
+		for ( int nn = 0; nn < out.size.x; nn+=BLOCK_SIZE ) {
+		#pragma omp parallel for
+			for ( int b = 0; b < out.size.b; b++ ) {
+				for ( int n = nn; n < nn + BLOCK_SIZE && n < out.size.x; n++ ) {
+					for ( int i = 0; i < grads_out.size.x; i++ ) {
+						grads_out(i, 0, 0, b) += act_grad(n, 0, 0, b) * weights( i, n, 0);
+					}
+				}
+                        }
+                }
+		grads_out.size = in.size;
+	}
+	
+	void calc_grads_thread_baseline_n( const tensor_t<double>& grad_next_layer ) {
+		
+		memset( grads_out.data, 0, grads_out.size.x * grads_out.size.y * grads_out.size.z * sizeof( double ) );
+		
+                grads_out.size.x = grads_out.size.x * grads_out.size.y * grads_out.size.z;
+                grads_out.size.y = 1;
+                grads_out.size.z = 1;
+
+                for ( int b = 0; b < out.size.b; b++ ) {
+                        for ( int n = 0; n < activator_input.size.x; n++ ){
+				double ad = activator_derivative( activator_input(n, 0, 0, b) );
+				double ng = grad_next_layer(n, 0, 0, b);
+				act_grad(n, 0, 0, b) = ad * ng;
+                        }
+                }
+		
+		// Reorder loops and  tile on n
+		for ( int nn = 0; nn < out.size.x; nn+=BLOCK_SIZE ) {
+			for ( int b = 0; b < out.size.b; b++ ) {
+				for ( int n = nn; n < nn + BLOCK_SIZE && n < out.size.x; n++ ) {
+					for ( int i = 0; i < grads_out.size.x; i++ ) {
+						grads_out(i, 0, 0, b) += act_grad(n, 0, 0, b) * weights( i, n, 0);
+					}
+				}
+                        }
+                }
+		grads_out.size = in.size;
+	}
+	
+	void calc_grads_thread_baseline_i( const tensor_t<double>& grad_next_layer ) {
 		
 		memset( grads_out.data, 0, grads_out.size.x * grads_out.size.y * grads_out.size.z * sizeof( double ) );
 		
