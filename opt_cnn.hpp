@@ -317,6 +317,7 @@ public:
 		for ( int nn = 0; nn < out.size.x; nn+=BLOCK_SIZE ) {
 			for ( int b = 0; b < out.size.b; b++ ) {
 				for ( int n = nn; n < nn + BLOCK_SIZE && n < out.size.x; n++ ) {
+#pragma omp parallel for
 					for ( int i = 0; i < grads_out.size.x; i++ ) {
 						grads_out(i, 0, 0, b) += act_grad(n, 0, 0, b) * weights( i, n, 0);
 					}
