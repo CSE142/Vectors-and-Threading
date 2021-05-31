@@ -202,7 +202,7 @@ public:
                 }
 		
 		// Reorder loops and  tile on n
-		#pragma omp parallel for
+#pragma omp parallel for
 		for ( int nn = 0; nn < out.size.x; nn+=BLOCK_SIZE ) {
 			tensor_t<double>_grads_out(grads_out.size);
 			_grads_out.clear();
@@ -215,7 +215,7 @@ public:
 					}
 				}
                         }
-		#pragma omp critical
+#pragma omp critical
 		{
 			for (int b = 0; b < out.size.b; b++) {
 				for (int i = 0; i < grads_out.size.x; i++){
@@ -245,7 +245,7 @@ public:
 		
 		// Reorder loops and  tile on n
 		for ( int nn = 0; nn < out.size.x; nn+=BLOCK_SIZE ) {
-		#pragma omp parallel for
+#pragma omp parallel for
 			for ( int b = 0; b < out.size.b; b++ ) {
 				for ( int n = nn; n < nn + BLOCK_SIZE && n < out.size.x; n++ ) {
 					for ( int i = 0; i < grads_out.size.x; i++ ) {
@@ -275,11 +275,22 @@ public:
 		
 		// Reorder loops and  tile on n
 		for ( int nn = 0; nn < out.size.x; nn+=BLOCK_SIZE ) {
-			for ( int b = 0; b < out.size.b; b++ ) {
-				for ( int n = nn; n < nn + BLOCK_SIZE && n < out.size.x; n++ ) {
+			for ( int b = 0; b < out.size.b; b++ ) { 
+				int minn = std::min(nn + BLOCK_SIZE, out.size.x);
+#pragma omp parallel for
+				for ( int n = nn; n < minn; n++ ) {
+					tensor_t<double>_grads_out(grads_out.size);
+					_grads_out.clear();
 					for ( int i = 0; i < grads_out.size.x; i++ ) {
-						grads_out(i, 0, 0, b) += act_grad(n, 0, 0, b) * weights( i, n, 0);
+						double t = act_grad(n, 0, 0, b) * weights( i, n, 0);
+						_grads_out(i, 0, 0, b) += t;
 					}
+#pragma omp critical
+				{
+					for (int i = 0; i < grads_out.size.x; i++) {
+						grads_out(i, 0, 0, b) += _grads_out(i, 0, 0, b);
+					}
+				}
 				}
                         }
                 }
