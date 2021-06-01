@@ -35,16 +35,16 @@ public:
 	
 	void activate( tensor_t<double>& in ) {
 		
-		std::stringstream ss;
+		//std::stringstream ss;
 		
-		ss << g_function_name << "_I" << FC_ACTIVATE_IMPLEMENTATION << "_" << g_param2_value << "_" << g_param3_value << "_" << g_param4_value;
+		//ss << g_function_name << "_I" << FC_ACTIVATE_IMPLEMENTATION << "_" << g_param2_value << "_" << g_param3_value << "_" << g_param4_value;
 		omp_set_num_threads(4);
-		NEW_TRACE(ss.str().c_str());
-		START_TRACE();
-		DUMP_TENSOR_START("weights", weights);
-		DUMP_TENSOR_START("activator_input", activator_input);
-		DUMP_TENSOR_START("out", out);
-		DUMP_TENSOR_START("in", in);
+		//NEW_TRACE(ss.str().c_str());
+		//START_TRACE();
+		//DUMP_TENSOR_START("weights", weights);
+		//DUMP_TENSOR_START("activator_input", activator_input);
+		//DUMP_TENSOR_START("out", out);
+		//DUMP_TENSOR_START("in", in);
 		switch (FC_ACTIVATE_IMPLEMENTATION) {
 		case 0:
 			fc_layer_t::activate(in);
@@ -56,12 +56,12 @@ public:
 			fc_layer_t::activate(in);
 			break;
 		}
-		DUMP_STOP("weights");
-		DUMP_STOP("activator_input");
-		DUMP_STOP("out");
-		DUMP_STOP("in");
+		//DUMP_STOP("weights");
+		//DUMP_STOP("activator_input");
+		//DUMP_STOP("out");
+		//DUMP_STOP("in");
 
-		STOP_TRACE();
+		//STOP_TRACE();
 	}
 
 
@@ -132,7 +132,19 @@ public:
 	}
 
 	void calc_grads( const tensor_t<double>& grad_next_layer ) {
+		std::stringstream ss;
+
+		ss << g_function_name << "_I" << CALC_GRADS_IMPLEMENTATION;
+		
 		omp_set_num_threads(CALC_GRADS_THREAD_COUNT);
+
+		NEW_TRACE(ss.str().c_str());
+		START_TRACE();
+		DUMP_TENSOR_START("grads_out", grads_out);
+		DUMP_TENSOR_START("weights", weights);
+		DUMP_TENSOR_START("activator_input", activator_input);
+		DUMP_TENSOR_START("out", out);
+		DUMP_TENSOR_START("in", in);
 		
 		switch (CALC_GRADS_IMPLEMENTATION) {
 			case 1:
@@ -154,6 +166,12 @@ public:
 				calc_grads_thread_baseline(grad_next_layer);
 				break;
 		}
+		DUMP_STOP("in");
+		DUMP_STOP("out");
+		DUMP_STOP("activator_input");
+		DUMP_STOP("weights");
+		DUMP_STOP("grads_out");
+		STOP_TRACE();
 	}
 			
 	// This is as a starting point for your work on this lab.
