@@ -28,7 +28,7 @@ public:
 //#define FC_ACTIVATE_IMPLEMENTATION g_param1_value
 #define FC_ACTIVATE_IMPLEMENTATION 1
 //#define CALC_GRADS_IMPLEMENTATION g_param1_value
-#define CALC_GRADS_IMPLEMENTATION 2
+#define CALC_GRADS_IMPLEMENTATION 5
 //#define FC_ACTIVATE_THREAD_COUNT g_thread_count
 #define CALC_GRADS_THREAD_COUNT 4
 //#define CALC_GRADS_THREAD_COUNT g_thread_count
@@ -142,9 +142,9 @@ public:
 		START_TRACE();
 		DUMP_TENSOR_START("grads_out", grads_out);
 		DUMP_TENSOR_START("weights", weights);
-		DUMP_TENSOR_START("activator_input", activator_input);
-		DUMP_TENSOR_START("out", out);
-		DUMP_TENSOR_START("in", in);
+		DUMP_TENSOR_START("act_grad", act_grad);
+		//DUMP_TENSOR_START("out", out);
+		//DUMP_TENSOR_START("in", in);
 		
 		switch (CALC_GRADS_IMPLEMENTATION) {
 			case 1:
@@ -166,9 +166,9 @@ public:
 				calc_grads_thread_baseline(grad_next_layer);
 				break;
 		}
-		DUMP_STOP("in");
-		DUMP_STOP("out");
-		DUMP_STOP("activator_input");
+		//DUMP_STOP("in");
+		//DUMP_STOP("out");
+		DUMP_STOP("act_grad");
 		DUMP_STOP("weights");
 		DUMP_STOP("grads_out");
 		STOP_TRACE();
