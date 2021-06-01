@@ -52,6 +52,9 @@ public:
 		case 1:
 			activate_1(in);
 			break;
+		case 2:
+			activate_2(in);
+			break;
 		default:
 			fc_layer_t::activate(in);
 			break;
@@ -74,6 +77,64 @@ public:
 	// "noinlin" will prevent it from inlining this function into
 	// activate() above.  This makes it easier to find this code in the assembly.
 	void __attribute__ ((noinline)) activate_1( tensor_t<double>& in) {
+		copy_input(in);
+	
+		tdsize old_size = in.size;
+		tdsize old_out_size = out.size;
+	
+		// cast to correct shape
+		in.size.x = old_size.x * old_size.y * old_size.z;
+		in.size.y = old_size.b;
+		in.size.z = 1;
+		in.size.b = 1;
+	
+		out.size.x = old_out_size.x * old_out_size.y * old_out_size.z;
+		out.size.y = old_out_size.b;
+		out.size.z = 1;
+		out.size.b = 1;
+	
+		for ( int b = 0; b < activator_input.size.b; b += 1) {
+			for ( int n = 0; n < activator_input.size.x; n++ ) {
+				activator_input(n, 0, 0, b) = 0;
+			}
+		}
+
+//#define I_TILE_SIZE g_param2_value
+//#define Y_TILE_SIZE g_param3_value
+//#define N_TILE_SIZE g_param4_value
+#define I_TILE_SIZE 32
+#define Y_TILE_SIZE 4
+#define N_TILE_SIZE 16
+
+		for ( int nn = 0; nn < out.size.x; nn+=N_TILE_SIZE ) {
+			for ( int ii = 0; ii < in.size.x; ii += I_TILE_SIZE) {
+				for ( int bb = 0; bb < in.size.y; bb+=Y_TILE_SIZE ) {
+					for ( int b = bb; b < bb + Y_TILE_SIZE && b < in.size.y; b++ ) {
+						for (int n = nn; n < nn + N_TILE_SIZE && n < out.size.x; n++ ) {
+							for ( int i = ii; i < ii + I_TILE_SIZE && i < in.size.x; i++ ) {
+								double in_val = in(i, b, 0);
+								double weight_val = weights( i, n, 0 );
+								double mul_val = in_val * weight_val;
+								double acc_val = activator_input(n, 0, 0, b) + mul_val;
+								activator_input(n, 0, 0, b) = acc_val;
+							}
+						}
+					}
+				}
+			}
+		}
+	
+		// finally, apply the activator function.
+		for ( unsigned int n = 0; n < activator_input.element_count(); n++ ) {
+			out.data[n] = activator_function( activator_input.data[n] );
+		}
+	
+	
+		in.size = old_size;
+		out.size = old_out_size;
+	}
+	
+	void __attribute__ ((noinline)) activate_2( tensor_t<double>& in) {
 		copy_input(in);
 	
 		tdsize old_size = in.size;
