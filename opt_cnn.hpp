@@ -164,7 +164,10 @@ public:
 #define Y_TILE_SIZE 4
 #define N_TILE_SIZE 16
 
+#pragma omp parallel for
 		for ( int nn = 0; nn < out.size.x; nn+=N_TILE_SIZE ) {
+			tensor_t<double>_activator_input(activator_input.size);
+			_activator_input.clear();
 			for ( int ii = 0; ii < in.size.x; ii += I_TILE_SIZE) {
 				for ( int bb = 0; bb < in.size.y; bb+=Y_TILE_SIZE ) {
 					for ( int b = bb; b < bb + Y_TILE_SIZE && b < in.size.y; b++ ) {
@@ -174,12 +177,25 @@ public:
 								double weight_val = weights( i, n, 0 );
 								double mul_val = in_val * weight_val;
 								double acc_val = activator_input(n, 0, 0, b) + mul_val;
-								activator_input(n, 0, 0, b) = acc_val;
+								_activator_input(n, 0, 0, b) += acc_val;
 							}
 						}
 					}
 				}
 			}
+#pragma omp critical
+		{
+			for (int nn = 0; nn < out.size.x; nn += N_TILE_SIZE){
+				for ( int bb = 0; bb < in.size.y; bb+=Y_TILE_SIZE){
+
+					for (int b = bb; b < bb + Y_TILE_SIZE && b < in.size.y; b++){
+						for (int n = nn; n < nn + N_TILE_SIZE && n < out.size.x; n++){
+							activator_input(n, 0, 0, b) += _activator_input(n, 0, 0, b);
+						}
+					}
+				}
+			}
+		}
 		}
 	
 		// finally, apply the activator function.
