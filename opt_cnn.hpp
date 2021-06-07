@@ -598,4 +598,20 @@ public:
 		relu_layer_t(in_size)
 	{
 	}
+	void calc_grads(const tensor_t<double>& grad_next_layer )
+        {
+	omp_set_num_threads(4);
+#pragma omp parallel for simd
+                throw_assert(grad_next_layer.size == in.size, "mismatched input");
+                for ( int b = 0; b < in.size.b; b++ )
+                        for ( int i = 0; i < in.size.x; i++ )
+                                for ( int j = 0; j < in.size.y; j++ )
+                                        for ( int z = 0; z < in.size.z; z++ )
+                                        {
+                                                grads_out( i, j, z ) = (in( i, j, z ) < 0) ?
+                                                        (0) :
+                                                        (grad_next_layer( i, j, z ));
+                                        }
+
+        }
 };
