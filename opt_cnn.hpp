@@ -447,34 +447,31 @@ public:
 		throw_assert(grad_next_layer.size == out.size, "mismatch input size for calc_grads");
 		omp_set_num_threads(4);
 		for ( int b = 0; b < in.size.b; b++ )
-			for ( uint k = 0; k < filter_grads.size(); k++ ) 
-				for ( int i = 0; i < kernel_size; i++ )
-					for ( int j = 0; j < kernel_size; j++ )
-						for ( int z = 0; z < in.size.z; z++ )
-							filter_grads[k].get( i, j, z, b ).grad = 0;
-//#pragma omp parallal for 	
-		for ( int bb = 0; bb < in.size.b; bb+=BLOCK_SIZE ) {
-			for ( int z = 0; z < in.size.z; z++ ) {	
-				for ( int y = 0; y < in.size.y; y++ ) {
-					for ( int x = 0; x < in.size.x; x++ ) {				
-						range_t rn = map_to_output( x, y );
+	for ( uint k = 0; k < filter_grads.size(); k++ ) 
+		for ( int z = 0; z < in.size.z; z++ )			
+			for ( int j = 0; j < kernel_size; j++ )				
+					for ( int i = 0; i < kernel_size; i++ )	
 						
-						for ( int b = bb; b < bb + BLOCK_SIZE && b < in.size.b; bb++ ) {
-							double sum_error = 0;
-							for ( int k = rn.min_z; k <= rn.max_z; k++ ) {
-								for ( int j = rn.min_y; j <= rn.max_y; j++ ) {
-									for ( int i = rn.min_x; i <= rn.max_x; i++ ) {
-										int minx = i * stride;
-										int miny = j * stride;			
-										
-										int w_applied = filters[k].get( x - minx, y - miny, z );
-										sum_error += w_applied * grad_next_layer( i, j, k, b );
-										filter_grads[k].get( x - minx, y - miny, z, b ).grad += in( x, y, z, b ) * grad_next_layer( i, j, k, b );
+							filter_grads[k].get( i, j, z, b ).grad = 0;
+
+	for ( int b = 0; b < in.size.b; b++ ) {
+		for ( int z = 0; z < in.size.z; z++ ) {
+			for ( int y = 0; y < in.size.y; y++ ) {
+				for ( int x = 0; x < in.size.x; x++ ) {
+					range_t rn = map_to_output( x, y );					
+						double sum_error = 0;
+						for ( int i = rn.min_x; i <= rn.max_x; i++ ) {
+							int minx = i * stride;
+							for ( int j = rn.min_y; j <= rn.max_y; j++ ) {
+								int miny = j * stride;
+								for ( int k = rn.min_z; k <= rn.max_z; k++ ) {
+									int w_applied = filters[k].get( x - minx, y - miny, z );
+									sum_error += w_applied * grad_next_layer( i, j, k, b );
+									filter_grads[k].get( x - minx, y - miny, z, b ).grad += in( x, y, z, b ) * grad_next_layer( i, j, k, b );
 								}
 							}
 						}
 						grads_out( x, y, z, b ) = sum_error;
-						}
 					}
 				}
 			}
