@@ -544,11 +544,11 @@ public:
                            for ( int y = 0; y < in.size.y; y++ ) {
 				for ( int x = 0; x < in.size.x; x++ ) {
                                         range_t rn = map_to_output( x, y );
-                                        
+                                        for ( int z = 0; z < in.size.z; z++ ) {
                                                 double sum_error = 0;
                                                 for ( int i = rn.min_x; i <= rn.max_x; i++ ) {
                                                         for ( int j = rn.min_y; j <= rn.max_y; j++ ) {
-							for ( int z = 0; z < in.size.z; z++ ) {
+							
                                                                 int is_max = in( x, y, z ) == out( i, j, z ) ? 1 : 0;
                                                                 sum_error += is_max * grad_next_layer( i, j, z );
                                                         }
