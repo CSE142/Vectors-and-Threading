@@ -30,7 +30,7 @@ public:
 //#define CALC_GRADS_IMPLEMENTATION g_param1_value
 #define CALC_GRADS_IMPLEMENTATION 2
 //#define FC_ACTIVATE_THREAD_COUNT g_thread_count
-#define CALC_GRADS_THREAD_COUNT 4
+#define CALC_GRADS_THREAD_COUNT 8
 //#define CALC_GRADS_THREAD_COUNT g_thread_count
 	
 #define I_TILE_SIZE 32
@@ -42,7 +42,7 @@ public:
 		//std::stringstream ss;
 		
 		//ss << g_function_name << "_I" << FC_ACTIVATE_IMPLEMENTATION << "_" << g_param2_value << "_" << g_param3_value << "_" << g_param4_value;
-		omp_set_num_threads(4);
+		omp_set_num_threads(8);
 		//NEW_TRACE(ss.str().c_str());
 		//START_TRACE();
 		//DUMP_TENSOR_START("weights", weights);
