@@ -447,14 +447,14 @@ public:
 					for ( int i = 0; i < kernel_size; i++ )	
 						
 							filter_grads[k].get( i, j, z, b ).grad = 0;
-
+#pragma omp parallel for simd
 	for ( int b = 0; b < in.size.b; b++ ) {
 		for ( int z = 0; z < in.size.z; z++ ) {
 			for ( int y = 0; y < in.size.y; y++ ) {
 				for ( int x = 0; x < in.size.x; x++ ) {
 					range_t rn = map_to_output( x, y );					
 						double sum_error = 0;
-#pragma omp parallel for simd
+
 						for ( int i = rn.min_x; i <= rn.max_x; i++ ) {
 							int minx = i * stride;
 							for ( int j = rn.min_y; j <= rn.max_y; j++ ) {
@@ -502,10 +502,10 @@ public:
                                         
                                                 point_t mapped(x*stride, y*stride, 0);
                                                 double sum = 0;
-						for ( int z = 0; z < in.size.z; z++ )
+						
                                                 for ( int i = 0; i < kernel_size; i++ )
                                                         for ( int j = 0; j < kernel_size; j++ )
-							
+								for ( int z = 0; z < in.size.z; z++ )
                                                                  {
                                                                         double f = filter_data( i, j, z );
 
