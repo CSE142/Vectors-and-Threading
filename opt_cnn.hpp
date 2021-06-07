@@ -161,12 +161,6 @@ public:
 			}
 		}
 
-//#define I_TILE_SIZE g_param2_value
-//#define Y_TILE_SIZE g_param3_value
-//#define N_TILE_SIZE g_param4_value
-//#define I_TILE_SIZE 32
-//#define Y_TILE_SIZE 4
-//#define N_TILE_SIZE 64
 
 #pragma omp parallel for
 		for ( int nn = 0; nn < out.size.x; nn+=N_TILE_SIZE ) {
@@ -213,17 +207,17 @@ public:
 	}
 
 	void calc_grads( const tensor_t<double>& grad_next_layer ) {
-		std::stringstream ss;
+		//std::stringstream ss;
 
-		ss << g_function_name << "_I" << CALC_GRADS_IMPLEMENTATION;
+		//ss << g_function_name << "_I" << CALC_GRADS_IMPLEMENTATION;
 		
 		omp_set_num_threads(4);
 
-		NEW_TRACE(ss.str().c_str());
-		START_TRACE();
-		DUMP_TENSOR_START("grads_out", grads_out);
-		DUMP_TENSOR_START("weights", weights);
-		DUMP_TENSOR_START("act_grad", act_grad);
+		//NEW_TRACE(ss.str().c_str());
+		//START_TRACE();
+		//DUMP_TENSOR_START("grads_out", grads_out);
+		//DUMP_TENSOR_START("weights", weights);
+		//DUMP_TENSOR_START("act_grad", act_grad);
 		//DUMP_TENSOR_START("out", out);
 		//DUMP_TENSOR_START("in", in);
 		
@@ -249,10 +243,10 @@ public:
 		}
 		//DUMP_STOP("in");
 		//DUMP_STOP("out");
-		DUMP_STOP("act_grad");
-		DUMP_STOP("weights");
-		DUMP_STOP("grads_out");
-		STOP_TRACE();
+		//DUMP_STOP("act_grad");
+		//DUMP_STOP("weights");
+		//DUMP_STOP("grads_out");
+		//STOP_TRACE();
 	}
 			
 	// This is as a starting point for your work on this lab.
@@ -496,11 +490,15 @@ public:
 	void activate( tensor_t<double>& in ) {
 		omp_set_num_threads(4);
                 copy_input(in);
+		
+#pragma omp parallel for simd
+
                 for ( int b = 0; b < out.size.b; b++ ) {
                         for ( uint filter = 0; filter < filters.size(); filter++ ) {
                                 tensor_t<double>& filter_data = filters[filter];
-                                for ( int x = 0; x < out.size.x; x++ ) {
-                                        for ( int y = 0; y < out.size.y; y++ ) {
+				for ( int y = 0; y < out.size.y; y++ ) {
+                                	for ( int x = 0; x < out.size.x; x++ ) {
+                                        
                                                 point_t mapped(x*stride, y*stride, 0);
                                                 double sum = 0;
                                                 for ( int i = 0; i < kernel_size; i++ )
