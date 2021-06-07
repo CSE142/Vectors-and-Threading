@@ -447,10 +447,11 @@ public:
 		omp_set_num_threads(8);
 		for ( int b = 0; b < in.size.b; b++ )
 			for ( uint k = 0; k < filter_grads.size(); k++ ) 
-				for ( int i = 0; i < kernel_size; i++ )
+				//for ( int i = 0; i < kernel_size; i++ )
 					for ( int j = 0; j < kernel_size; j++ )
 						for ( int z = 0; z < in.size.z; z++ )
-							filter_grads[k].get( i, j, z, b ).grad = 0;
+							for ( int i = 0; i < kernel_size; i++ )
+								filter_grads[k].get( i, j, z, b ).grad = 0;
 		
 		for ( int b = 0; b < in.size.b; b++ ) {
 			for ( int x = 0; x < in.size.x; x++ ) {
@@ -458,17 +459,20 @@ public:
 					range_t rn = map_to_output( x, y );
 					for ( int z = 0; z < in.size.z; z++ ) {
 						double sum_error = 0;
-						for ( int i = rn.min_x; i <= rn.max_x; i++ ) {
-							int minx = i * stride;
+						//for ( int i = rn.min_x; i <= rn.max_x; i++ ) {
+						//	int minx = i * stride;
 							for ( int j = rn.min_y; j <= rn.max_y; j++ ) {
 								int miny = j * stride;
 								for ( int k = rn.min_z; k <= rn.max_z; k++ ) {
-									int w_applied = filters[k].get( x - minx, y - miny, z );
-									sum_error += w_applied * grad_next_layer( i, j, k, b );
-									filter_grads[k].get( x - minx, y - miny, z, b ).grad += in( x, y, z, b ) * grad_next_layer( i, j, k, b );
+									for ( int i = rn.min_x; i <= rn.max_x; i++ ) {
+										int minx = i * stride;
+										int w_applied = filters[k].get( x - minx, y - miny, z );
+										sum_error += w_applied * grad_next_layer( i, j, k, b );
+										filter_grads[k].get( x - minx, y - miny, z, b ).grad += in( x, y, z, b ) * grad_next_layer( i, j, k, b );
+									}
 								}
 							}
-						}
+						//}
 						grads_out( x, y, z, b ) = sum_error;
 					}
 				}
