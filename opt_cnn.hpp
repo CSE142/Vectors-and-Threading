@@ -445,7 +445,7 @@ public:
 	void calc_grads(const tensor_t<double>& grad_next_layer ) {
 #define BLOCK_SIZE 4
 		throw_assert(grad_next_layer.size == out.size, "mismatch input size for calc_grads");
-		omp_set_num_threads(4);
+		omp_set_num_threads(8);
 		for ( int b = 0; b < in.size.b; b++ )
 	for ( uint k = 0; k < filter_grads.size(); k++ ) 
 		for ( int z = 0; z < in.size.z; z++ )			
@@ -481,11 +481,14 @@ public:
 	
 	void fix_weights() {
 	omp_set_num_threads(8);
+	
+	#pragma omp parallal for
                 for ( int b = 0; b < in.size.b; b++ )
                         for ( uint a = 0; a < filters.size(); a++ )
-                                for ( int i = 0; i < kernel_size; i++ )
-                                        for ( int j = 0; j < kernel_size; j++ )
-                                                for ( int z = 0; z < in.size.z; z++ ) {
+				 for ( int z = 0; z < in.size.z; z++ )
+					for ( int j = 0; j < kernel_size; j++ )
+                              			  for ( int i = 0; i < kernel_size; i++ ){
+				
                                                         double& w = filters[a].get( i, j, z );
                                                         gradient_t& grad = filter_grads[a].get( i, j, z, b );
                                                         w = update_weight( w, grad );
