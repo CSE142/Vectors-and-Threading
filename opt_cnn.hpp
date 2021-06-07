@@ -4,8 +4,8 @@
 #include"pin_tags.h"
 #include"omp.h"
 
-#define DUMP_TENSOR_START(TAG, T) DUMP_START(TAG, (void *) &((T).data[0]), (void *) &((T).data[(T).element_count() - 1]), true)
-#define DUMP_TENSOR_STOP(TAG) DUMP_STOP(TAG)
+//#define DUMP_TENSOR_START(TAG, T) DUMP_START(TAG, (void *) &((T).data[0]), (void *) &((T).data[(T).element_count() - 1]), true)
+//#define DUMP_TENSOR_STOP(TAG) DUMP_STOP(TAG)
 
 // This class replaces its parent classes in the implementation of the learning
 // model for this lab.  If you override functions in the baseclass by
@@ -565,6 +565,7 @@ public:
 		
 		omp_set_num_threads(4);
 #pragma omp parallel for simd
+
                 for ( int b = 0; b < out.size.b; b++ ) {
                         for ( int x = 0; x < out.size.x; x++ ) {
                                 for ( int y = 0; y < out.size.y; y++ ) {
