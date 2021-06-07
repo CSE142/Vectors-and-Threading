@@ -479,6 +479,27 @@ public:
 		}
 	}
 	
+	void test_fix_weights() {
+                for(uint i = 0; i < filter_grads.size(); i++) {
+                        randomize(filter_grads[i]);
+                }
+                fix_weights();
+        }
+
+
+        void fix_weights() {
+                for ( int b = 0; b < in.size.b; b++ )
+                        for ( uint a = 0; a < filters.size(); a++ )
+                                for ( int i = 0; i < kernel_size; i++ )
+                                        for ( int j = 0; j < kernel_size; j++ )
+                                                for ( int z = 0; z < in.size.z; z++ ) {
+                                                        double& w = filters[a].get( i, j, z );
+                                                        gradient_t& grad = filter_grads[a].get( i, j, z, b );
+                                                        w = update_weight( w, grad );
+                                                        update_gradient( grad );
+                                                }
+        }
+	
 
 	void activate( tensor_t<double>& in ) {
 		omp_set_num_threads(8);
