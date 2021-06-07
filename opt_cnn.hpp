@@ -478,7 +478,7 @@ public:
                         for ( uint a = 0; a < filters.size(); a++ )
                                 for ( int i = 0; i < kernel_size; i++ )
                                         for ( int j = 0; j < kernel_size; j++ )
-					#pragma omp parallel for
+					
                                                 for ( int z = 0; z < in.size.z; z++ ) {
                                                         double& w = filters[a].get( i, j, z );
                                                         gradient_t& grad = filter_grads[a].get( i, j, z, b );
@@ -504,7 +504,7 @@ public:
                                                 double sum = 0;
                                                 for ( int i = 0; i < kernel_size; i++ )
                                                         for ( int j = 0; j < kernel_size; j++ )
-							#pragma omp parallel for
+							
                                                                 for ( int z = 0; z < in.size.z; z++ ) {
                                                                         double f = filter_data( i, j, z );
 
