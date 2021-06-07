@@ -26,7 +26,7 @@ public:
 	}
 
 //#define FC_ACTIVATE_IMPLEMENTATION g_param1_value
-#define FC_ACTIVATE_IMPLEMENTATION 2
+#define FC_ACTIVATE_IMPLEMENTATION 1
 //#define CALC_GRADS_IMPLEMENTATION g_param1_value
 #define CALC_GRADS_IMPLEMENTATION 2
 //#define FC_ACTIVATE_THREAD_COUNT g_thread_count
