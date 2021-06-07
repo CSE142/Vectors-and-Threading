@@ -217,7 +217,7 @@ public:
 
 		ss << g_function_name << "_I" << CALC_GRADS_IMPLEMENTATION;
 		
-		omp_set_num_threads(8);
+		omp_set_num_threads(4);
 
 		NEW_TRACE(ss.str().c_str());
 		START_TRACE();
@@ -460,6 +460,7 @@ public:
 				for ( int x = 0; x < in.size.x; x++ ) {
 					range_t rn = map_to_output( x, y );					
 						double sum_error = 0;
+#pragma omp parallel for
 						for ( int i = rn.min_x; i <= rn.max_x; i++ ) {
 							int minx = i * stride;
 							for ( int j = rn.min_y; j <= rn.max_y; j++ ) {
