@@ -478,14 +478,6 @@ public:
 			}
 		}
 	}
-	
-	void test_fix_weights() {
-                for(uint i = 0; i < filter_grads.size(); i++) {
-                        randomize(filter_grads[i]);
-                }
-                fix_weights();
-        }
-
 
         void fix_weights() {
                 for ( int b = 0; b < in.size.b; b++ )
@@ -502,7 +494,7 @@ public:
 	
 
 	void activate( tensor_t<double>& in ) {
-		omp_set_num_threads(8);
+		omp_set_num_threads(4);
                 copy_input(in);
                 for ( int b = 0; b < out.size.b; b++ ) {
                         for ( uint filter = 0; filter < filters.size(); filter++ ) {
