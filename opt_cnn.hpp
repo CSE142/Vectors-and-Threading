@@ -460,7 +460,7 @@ public:
 				for ( int x = 0; x < in.size.x; x++ ) {
 					range_t rn = map_to_output( x, y );					
 						double sum_error = 0;
-#pragma omp parallel for
+#pragma omp parallel for simd
 						for ( int i = rn.min_x; i <= rn.max_x; i++ ) {
 							int minx = i * stride;
 							for ( int j = rn.min_y; j <= rn.max_y; j++ ) {
