@@ -502,10 +502,11 @@ public:
                                         
                                                 point_t mapped(x*stride, y*stride, 0);
                                                 double sum = 0;
+						for ( int z = 0; z < in.size.z; z++ )
                                                 for ( int i = 0; i < kernel_size; i++ )
                                                         for ( int j = 0; j < kernel_size; j++ )
 							
-                                                                for ( int z = 0; z < in.size.z; z++ ) {
+                                                                 {
                                                                         double f = filter_data( i, j, z );
 
                                                                         double v;
