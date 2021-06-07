@@ -460,12 +460,13 @@ public:
 						range_t rn = map_to_output( x, y );
 						
 						for ( int b = bb; b < bb + BLOCK_SIZE && b < in.size.b; bb++ ) {
+							double sum_error = 0;
 							for ( int k = rn.min_z; k <= rn.max_z; k++ ) {
 								for ( int j = rn.min_y; j <= rn.max_y; j++ ) {
 									for ( int i = rn.min_x; i <= rn.max_x; i++ ) {
 										int minx = i * stride;
 										int miny = j * stride;			
-										double sum_error = 0;
+										
 										int w_applied = filters[k].get( x - minx, y - miny, z );
 										sum_error += w_applied * grad_next_layer( i, j, k, b );
 										filter_grads[k].get( x - minx, y - miny, z, b ).grad += in( x, y, z, b ) * grad_next_layer( i, j, k, b );
