@@ -443,9 +443,9 @@ public:
 			  ) : conv_layer_t(stride, kernel_size, kernel_count, pad, in_size){}
 
 	void calc_grads(const tensor_t<double>& grad_next_layer ) {
-#define BLOCK_SIZE 4
+
 		throw_assert(grad_next_layer.size == out.size, "mismatch input size for calc_grads");
-		omp_set_num_threads(8);
+		omp_set_num_threads(4);
 		for ( int b = 0; b < in.size.b; b++ )
 	for ( uint k = 0; k < filter_grads.size(); k++ ) 
 		for ( int z = 0; z < in.size.z; z++ )			
