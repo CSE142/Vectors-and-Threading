@@ -35,7 +35,7 @@ public:
 	
 #define I_TILE_SIZE 32
 #define Y_TILE_SIZE 4
-#define N_TILE_SIZE 16
+#define N_TILE_SIZE 64
 	
 	void activate( tensor_t<double>& in ) {
 		
