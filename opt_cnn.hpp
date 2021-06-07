@@ -454,21 +454,21 @@ public:
 							filter_grads[k].get( i, j, z, b ).grad = 0;
 //#pragma omp parallal for 	
 		for ( int bb = 0; bb < in.size.b; bb+=BLOCK_SIZE ) {
-			for ( int i = rn.min_x; i <= rn.max_x; i++ ) {
-				int minx = i * stride;
-				for ( int k = rn.min_z; k <= rn.max_z; k++ ) {
-					for ( int j = rn.min_y; j <= rn.max_y; j++ ) {
-						int miny = j * stride;
-						for ( int z = 0; z < in.size.z; z++ ) {
+			for ( int z = 0; z < in.size.z; z++ ) {	
+				for ( int y = 0; y < in.size.y; y++ ) {
+					for ( int x = 0; x < in.size.x; x++ ) {				
+						range_t rn = map_to_output( x, y );
 						
 						for ( int b = bb; b < bb + BLOCK_SIZE && b < in.size.b; bb++ ) {
-							for ( int y = 0; y < in.size.y; y++ ) {
-								for ( int x = 0; x < in.size.x; x++ ) {				
-									range_t rn = map_to_output( x, y );					
-									double sum_error = 0;
-									int w_applied = filters[k].get( x - minx, y - miny, z );
-									sum_error += w_applied * grad_next_layer( i, j, k, b );
-									filter_grads[k].get( x - minx, y - miny, z, b ).grad += in( x, y, z, b ) * grad_next_layer( i, j, k, b );
+							for ( int k = rn.min_z; k <= rn.max_z; k++ ) {
+								for ( int j = rn.min_y; j <= rn.max_y; j++ ) {
+									for ( int i = rn.min_x; i <= rn.max_x; i++ ) {
+										int minx = i * stride;
+										int miny = j * stride;			
+										double sum_error = 0;
+										int w_applied = filters[k].get( x - minx, y - miny, z );
+										sum_error += w_applied * grad_next_layer( i, j, k, b );
+										filter_grads[k].get( x - minx, y - miny, z, b ).grad += in( x, y, z, b ) * grad_next_layer( i, j, k, b );
 								}
 							}
 						}
