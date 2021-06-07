@@ -443,6 +443,7 @@ public:
 			  ) : conv_layer_t(stride, kernel_size, kernel_count, pad, in_size){}
 
 	void calc_grads(const tensor_t<double>& grad_next_layer ) {
+#define BLOCK_SIZE 4
 		throw_assert(grad_next_layer.size == out.size, "mismatch input size for calc_grads");
 		omp_set_num_threads(4);
 		for ( int b = 0; b < in.size.b; b++ )
@@ -452,18 +453,19 @@ public:
 						for ( int z = 0; z < in.size.z; z++ )
 							filter_grads[k].get( i, j, z, b ).grad = 0;
 //#pragma omp parallal for 	
-		for ( int b = 0; b < in.size.b; b++ ) {
-			for ( int y = 0; y < in.size.y; y++ ) {
-				for ( int x = 0; x < in.size.x; x++ ) {
-				//for ( int y = 0; y < in.size.y; y++ ) {
-					range_t rn = map_to_output( x, y );
-					for ( int z = 0; z < in.size.z; z++ ) {
-						double sum_error = 0;
-						for ( int i = rn.min_x; i <= rn.max_x; i++ ) {
-							int minx = i * stride;
-							for ( int j = rn.min_y; j <= rn.max_y; j++ ) {
-								int miny = j * stride;
-								for ( int k = rn.min_z; k <= rn.max_z; k++ ) {
+		for ( int bb = 0; bb < in.size.b; bb+=BLOCK_SIZE ) {
+			for ( int i = rn.min_x; i <= rn.max_x; i++ ) {
+				int minx = i * stride;
+				for ( int k = rn.min_z; k <= rn.max_z; k++ ) {
+					for ( int j = rn.min_y; j <= rn.max_y; j++ ) {
+						int miny = j * stride;
+						for ( int z = 0; z < in.size.z; z++ ) {
+						
+						for ( int b = bb; b < bb + BLOCK_SIZE && b < in.size.b; bb++ ) {
+							for ( int y = 0; y < in.size.y; y++ ) {
+								for ( int x = 0; x < in.size.x; x++ ) {				
+									range_t rn = map_to_output( x, y );					
+									double sum_error = 0;
 									int w_applied = filters[k].get( x - minx, y - miny, z );
 									sum_error += w_applied * grad_next_layer( i, j, k, b );
 									filter_grads[k].get( x - minx, y - miny, z, b ).grad += in( x, y, z, b ) * grad_next_layer( i, j, k, b );
@@ -471,6 +473,7 @@ public:
 							}
 						}
 						grads_out( x, y, z, b ) = sum_error;
+						}
 					}
 				}
 			}
