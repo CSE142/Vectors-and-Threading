@@ -162,7 +162,7 @@ public:
 		}
 
 
-#pragma omp parallel for
+#pragma omp parallel for simd
 		for ( int nn = 0; nn < out.size.x; nn+=N_TILE_SIZE ) {
 			tensor_t<double>_activator_input(activator_input.size);
 			_activator_input.clear();
@@ -297,7 +297,7 @@ public:
                 }
 		
 		// Reorder loops and  tile on n
-#pragma omp parallel for
+#pragma omp parallel for simd
 		for ( int nn = 0; nn < out.size.x; nn+=BLOCK_SIZE ) {
 			tensor_t<double>_grads_out(grads_out.size);
 			_grads_out.clear();
@@ -474,6 +474,8 @@ public:
 	}
 
         void fix_weights() {
+	omp_set_num_threads(4);
+#pragma omp parallel for simd
                 for ( int b = 0; b < in.size.b; b++ )
                         for ( uint a = 0; a < filters.size(); a++ )
                                 for ( int i = 0; i < kernel_size; i++ )
