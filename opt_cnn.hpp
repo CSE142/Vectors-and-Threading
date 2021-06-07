@@ -476,6 +476,49 @@ public:
 			}
 		}
 	}
+	
+	void fix_weights() {
+                for ( int b = 0; b < in.size.b; b++ )
+                        for ( uint a = 0; a < filters.size(); a++ )
+                                for ( int i = 0; i < kernel_size; i++ )
+                                        for ( int j = 0; j < kernel_size; j++ )
+                                                for ( int z = 0; z < in.size.z; z++ ) {
+                                                        double& w = filters[a].get( i, j, z );
+                                                        gradient_t& grad = filter_grads[a].get( i, j, z, b );
+                                                        w = update_weight( w, grad );
+                                                        update_gradient( grad );
+                                                }
+        }
+	
+	void activate( tensor_t<double>& in ) {
+                copy_input(in);
+                for ( int b = 0; b < out.size.b; b++ ) {
+                        for ( uint filter = 0; filter < filters.size(); filter++ ) {
+                                tensor_t<double>& filter_data = filters[filter];
+                                for ( int x = 0; x < out.size.x; x++ ) {
+                                        for ( int y = 0; y < out.size.y; y++ ) {
+                                                point_t mapped(x*stride, y*stride, 0);
+                                                double sum = 0;
+                                                for ( int i = 0; i < kernel_size; i++ )
+                                                        for ( int j = 0; j < kernel_size; j++ )
+                                                                for ( int z = 0; z < in.size.z; z++ ) {
+                                                                        double f = filter_data( i, j, z );
+
+                                                                        double v;
+                                                                        if (mapped.x + i >= in.size.x ||
+                                                                        mapped.y + j >= in.size.y) {
+                                                                                v = pad;
+                                                                        } else {
+                                                                                v = in( mapped.x + i, mapped.y + j, z, b );
+                                                                        }
+                                                                        sum += f*v;
+                                                                }
+                                                out( x, y, filter, b ) = sum;
+                                        }
+                                }
+                        }
+                }
+        }
 };
 
 class opt_pool_layer_t: public pool_layer_t
