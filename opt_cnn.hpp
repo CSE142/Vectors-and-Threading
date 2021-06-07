@@ -35,14 +35,14 @@ public:
 	
 #define I_TILE_SIZE 32
 #define Y_TILE_SIZE 4
-#define N_TILE_SIZE 16
+#define N_TILE_SIZE 64
 	
 	void activate( tensor_t<double>& in ) {
 		
 		//std::stringstream ss;
 		
 		//ss << g_function_name << "_I" << FC_ACTIVATE_IMPLEMENTATION << "_" << g_param2_value << "_" << g_param3_value << "_" << g_param4_value;
-		omp_set_num_threads(4);
+		omp_set_num_threads(8);
 		//NEW_TRACE(ss.str().c_str());
 		//START_TRACE();
 		//DUMP_TENSOR_START("weights", weights);
@@ -217,7 +217,7 @@ public:
 
 		ss << g_function_name << "_I" << CALC_GRADS_IMPLEMENTATION;
 		
-		omp_set_num_threads(4);
+		omp_set_num_threads(8);
 
 		NEW_TRACE(ss.str().c_str());
 		START_TRACE();
