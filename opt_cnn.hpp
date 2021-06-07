@@ -33,6 +33,10 @@ public:
 #define CALC_GRADS_THREAD_COUNT 4
 //#define CALC_GRADS_THREAD_COUNT g_thread_count
 	
+#define I_TILE_SIZE 32
+#define Y_TILE_SIZE 4
+#define N_TILE_SIZE 16
+	
 	void activate( tensor_t<double>& in ) {
 		
 		//std::stringstream ss;
@@ -102,9 +106,9 @@ public:
 //#define I_TILE_SIZE g_param2_value
 //#define Y_TILE_SIZE g_param3_value
 //#define N_TILE_SIZE g_param4_value
-#define I_TILE_SIZE 32
-#define Y_TILE_SIZE 4
-#define N_TILE_SIZE 16
+//#define I_TILE_SIZE 32
+//#define Y_TILE_SIZE 4
+//#define N_TILE_SIZE 16
 
 		for ( int nn = 0; nn < out.size.x; nn+=N_TILE_SIZE ) {
 			for ( int ii = 0; ii < in.size.x; ii += I_TILE_SIZE) {
@@ -160,9 +164,9 @@ public:
 //#define I_TILE_SIZE g_param2_value
 //#define Y_TILE_SIZE g_param3_value
 //#define N_TILE_SIZE g_param4_value
-#define I_TILE_SIZE 32
-#define Y_TILE_SIZE 4
-#define N_TILE_SIZE 64
+//#define I_TILE_SIZE 32
+//#define Y_TILE_SIZE 4
+//#define N_TILE_SIZE 64
 
 #pragma omp parallel for
 		for ( int nn = 0; nn < out.size.x; nn+=N_TILE_SIZE ) {
