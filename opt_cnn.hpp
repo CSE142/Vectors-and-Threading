@@ -533,6 +533,61 @@ public:
 			  uint16_t filter_size,
 			  double pad,
 			  tdsize in_size ) : pool_layer_t(stride, filter_size, pad, in_size){}
+			  
+	void calc_grads(const tensor_t<double>& grad_next_layer )
+        {
+	omp_set_num_threads(4);
+#pragma omp parallel for simd
+
+                for ( int b = 0; b < in.size.b; b++ ) {
+                        for ( int x = 0; x < in.size.x; x++ ) {
+                                for ( int y = 0; y < in.size.y; y++ ) {
+                                        range_t rn = map_to_output( x, y );
+                                        for ( int z = 0; z < in.size.z; z++ ) {
+                                                double sum_error = 0;
+                                                for ( int i = rn.min_x; i <= rn.max_x; i++ ) {
+                                                        for ( int j = rn.min_y; j <= rn.max_y; j++ ) {
+                                                                int is_max = in( x, y, z ) == out( i, j, z ) ? 1 : 0;
+                                                                sum_error += is_max * grad_next_layer( i, j, z );
+                                                        }
+                                                }
+                                                grads_out( x, y, z, b ) = sum_error;
+                                        }
+                                }
+                        }
+                }
+        }
+	
+	void activate(tensor_t<double>& in ) {
+                copy_input(in);
+		
+		omp_set_num_threads(4);
+#pragma omp parallel for simd
+                for ( int b = 0; b < out.size.b; b++ ) {
+                        for ( int x = 0; x < out.size.x; x++ ) {
+                                for ( int y = 0; y < out.size.y; y++ ) {
+                                        for ( int z = 0; z < out.size.z; z++ ) {
+                                                point_t mapped(x*stride, y*stride, 0);
+                                                double mval = -FLT_MAX;
+                                                for ( int i = 0; i < filter_size; i++ )
+                                                        for ( int j = 0; j < filter_size; j++ ) {
+                                                                double v;
+                                                                if (mapped.x + i >= in.size.x ||
+                                                                mapped.y + j >= in.size.y) {
+                                                                        v = pad;
+                                                                } else {
+                                                                        v = in( mapped.x + i, mapped.y + j, z );
+                                                                }
+
+                                                                if ( v > mval )
+                                                                        mval = v;
+                                                        }
+                                                out( x, y, z, b ) = mval;
+                                        }
+                                }
+                        }
+                }
+        }
 };
 
 class opt_relu_layer_t : public relu_layer_t
