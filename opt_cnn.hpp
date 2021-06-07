@@ -30,7 +30,7 @@ public:
 //#define CALC_GRADS_IMPLEMENTATION g_param1_value
 #define CALC_GRADS_IMPLEMENTATION 2
 //#define FC_ACTIVATE_THREAD_COUNT g_thread_count
-#define CALC_GRADS_THREAD_COUNT 8
+//#define CALC_GRADS_THREAD_COUNT 8
 //#define CALC_GRADS_THREAD_COUNT g_thread_count
 	
 #define I_TILE_SIZE 32
@@ -217,7 +217,7 @@ public:
 
 		ss << g_function_name << "_I" << CALC_GRADS_IMPLEMENTATION;
 		
-		omp_set_num_threads(CALC_GRADS_THREAD_COUNT);
+		omp_set_num_threads(4);
 
 		NEW_TRACE(ss.str().c_str());
 		START_TRACE();
@@ -444,7 +444,7 @@ public:
 
 	void calc_grads(const tensor_t<double>& grad_next_layer ) {
 		throw_assert(grad_next_layer.size == out.size, "mismatch input size for calc_grads");
-		omp_set_num_threads(8);
+		omp_set_num_threads(4);
 		for ( int b = 0; b < in.size.b; b++ )
 			for ( uint k = 0; k < filter_grads.size(); k++ ) 
 				for ( int i = 0; i < kernel_size; i++ )
@@ -478,6 +478,7 @@ public:
 	}
 	
 	void fix_weights() {
+	omp_set_num_threads(8);
                 for ( int b = 0; b < in.size.b; b++ )
                         for ( uint a = 0; a < filters.size(); a++ )
                                 for ( int i = 0; i < kernel_size; i++ )
@@ -491,6 +492,7 @@ public:
         }
 	
 	void activate( tensor_t<double>& in ) {
+		omp_set_num_threads(8);
                 copy_input(in);
                 for ( int b = 0; b < out.size.b; b++ ) {
                         for ( uint filter = 0; filter < filters.size(); filter++ ) {
