@@ -162,7 +162,7 @@ public:
 //#define N_TILE_SIZE g_param4_value
 #define I_TILE_SIZE 32
 #define Y_TILE_SIZE 4
-#define N_TILE_SIZE 16
+#define N_TILE_SIZE 64
 
 #pragma omp parallel for
 		for ( int nn = 0; nn < out.size.x; nn+=N_TILE_SIZE ) {
