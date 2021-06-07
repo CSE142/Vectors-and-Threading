@@ -482,7 +482,7 @@ public:
 	void fix_weights() {
 	omp_set_num_threads(8);
 	
-	#pragma omp parallal for
+#pragma omp parallel for
                 for ( int b = 0; b < in.size.b; b++ )
                         for ( uint a = 0; a < filters.size(); a++ )
 				 for ( int z = 0; z < in.size.z; z++ )
