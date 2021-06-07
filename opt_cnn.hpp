@@ -479,23 +479,7 @@ public:
 		}
 	}
 	
-	void fix_weights() {
-	omp_set_num_threads(8);
-	
-#pragma omp parallel for
-                for ( int b = 0; b < in.size.b; b++ )
-                        for ( uint a = 0; a < filters.size(); a++ )
-				 for ( int z = 0; z < in.size.z; z++ )
-					for ( int j = 0; j < kernel_size; j++ )
-                              			  for ( int i = 0; i < kernel_size; i++ ){
-				
-                                                        double& w = filters[a].get( i, j, z );
-                                                        gradient_t& grad = filter_grads[a].get( i, j, z, b );
-                                                        w = update_weight( w, grad );
-                                                        update_gradient( grad );
-                                                }
-        }
-	
+
 	void activate( tensor_t<double>& in ) {
 		omp_set_num_threads(8);
                 copy_input(in);
